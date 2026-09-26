@@ -26,6 +26,9 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.animation.FadeTransition;
+import javafx.animation.ScaleTransition;
+import javafx.util.Duration;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -73,6 +76,7 @@ public class Overlay extends Application implements NativeKeyListener {
     // JavaFx - Overlay
     private Label focusedSlotLabel = new Label("No Slot selected");
     private Label deathCountLabel = new Label("Deaths: -");
+    private int lastOverlayDeaths = -1;
     private Stage overlayStage = null;
     private VBox root;
     
@@ -689,14 +693,36 @@ public void start(Stage primaryStage) throws Exception {
     }
     
     private void updateOverlayLabels(int slot, SaveProfile profile) {
-        focusedSlotLabel.setText("Slot " + slot + " - " + profile.name);
-
         int displayedDeaths = getDisplayedDeaths(profile);
+
         if (displayedDeaths >= 0) {
-            deathCountLabel.setText("Deaths: " + displayedDeaths);
+            deathCountLabel.setText(String.valueOf(displayedDeaths));
+
+            if (lastOverlayDeaths >= 0 && displayedDeaths > lastOverlayDeaths) {
+                animateDeathCounter();
+            }
+
+            lastOverlayDeaths = displayedDeaths;
         } else {
-            deathCountLabel.setText("Loading...");
+            deathCountLabel.setText("-");
         }
+    }
+
+    private void animateDeathCounter() {
+        ScaleTransition scaleAnimation = new ScaleTransition(Duration.millis(160), deathCountLabel);
+        scaleAnimation.setFromX(1.0);
+        scaleAnimation.setFromY(1.0);
+        scaleAnimation.setToX(1.35);
+        scaleAnimation.setToY(1.35);
+        scaleAnimation.setAutoReverse(true);
+        scaleAnimation.setCycleCount(2);
+
+        FadeTransition fadeAnimation = new FadeTransition(Duration.millis(320), deathCountLabel);
+        fadeAnimation.setFromValue(0.55);
+        fadeAnimation.setToValue(1.0);
+
+        scaleAnimation.play();
+        fadeAnimation.play();
     }
     
     private double pressOffsetX, pressOffsetY;
@@ -705,10 +731,10 @@ public void start(Stage primaryStage) throws Exception {
         overlayStage = new Stage();
 	    
         
-        root = new VBox(focusedSlotLabel, deathCountLabel);
+        root = new VBox(deathCountLabel);
         root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(10));
-		root.setBackground(new Background(new BackgroundFill(Color.rgb(30, 30, 30, 0.8), new CornerRadii(20), Insets.EMPTY)));
+        root.setPadding(new Insets(12, 24, 12, 24));
+        root.setBackground(Background.EMPTY);
 		root.setMouseTransparent(true);
 		root.setPickOnBounds(false);
 		
@@ -770,10 +796,10 @@ public void start(Stage primaryStage) throws Exception {
 		    glow.setOffsetX(0);
 		    glow.setOffsetY(0);
 		    glow.setRadius(12);
-		    glow.setColor(Color.rgb(240, 0, 25, 0.7));
+		    glow.setColor(Color.rgb(215, 180, 106, 0.85));
 		    
 		    deathCountLabel.setFont(Font.font("Prince Valiant", FontWeight.BOLD, BASE_FONT_SIZE_BIG * scale));
-		    deathCountLabel.setTextFill(Color.web("#FF4444"));
+		    deathCountLabel.setTextFill(Color.web("#D7B46A"));
 		    deathCountLabel.setEffect(glow);
 		    focusedSlotLabel.setFont(Font.font("Prince Valiant", BASE_FONT_SIZE_SMALL * scale));
 		    focusedSlotLabel.setTextFill(Color.web("#B0BEC5"));
